@@ -32,6 +32,47 @@ async function main() {
   });
 
   console.log('Seed completed: Admin and Operator created.');
+
+  // Create Sample Equipment
+  const sampleEquipment = await prisma.equipment.upsert({
+    where: { codigo: 'AC-DEMO-01' },
+    update: {},
+    create: {
+      codigo: 'AC-DEMO-01',
+      publicId: 'demo-ativo-01',
+      tipo: 'Ar Condicionado Split',
+      local: 'Sala de Servidores',
+      andar: '3º Andar',
+      status: 'OPERACIONAL',
+      dataInstalacao: new Date('2024-01-15'),
+      periodicidadeManutencao: 90,
+      attributes: {
+        create: [
+          { key: 'Fabricante', value: 'Daikin' },
+          { key: 'Capacidade', value: '60.000 BTUs' },
+          { key: 'Modelo', value: 'SkyAir R-32' }
+        ]
+      },
+      maintenances: {
+        create: [
+          {
+            data: new Date('2024-04-15'),
+            descricao: 'Limpeza de filtros e verificação de carga de gás.',
+            responsavel: 'Técnico Roberto',
+            observacao: 'Tudo em conformidade.'
+          },
+          {
+            data: new Date('2024-07-15'),
+            descricao: 'Troca de capacitor de partida e limpeza da condensadora.',
+            responsavel: 'Técnico Silva',
+            observacao: 'Peça substituída por desgaste preventivo.'
+          }
+        ]
+      }
+    }
+  });
+
+  console.log('Sample equipment created: AC-DEMO-01');
 }
 
 main()
