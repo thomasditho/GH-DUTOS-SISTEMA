@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("OPERATOR") // ADMIN, OPERATOR
+  createdAt DateTime @default(now())
+}
+
+model Equipment {
+  id                     Int                  @id @default(autoincrement())
+  publicId               String               @unique // NanoID for public URL
+  codigo                 String               @unique // e.g., AC-001
+  tipo                   String               // Chiller, Duto, Split
+  local                  String
+  andar                  String
+  status                 String               @default("OPERACIONAL") // OPERACIONAL, MANUTENCAO, CRITICO
+  dataInstalacao         DateTime?
+  periodicidadeManutencao Int?                 // In days
+  attributes             EquipmentAttribute[]
+  maintenances           Maintenance[]
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+}
+
+model EquipmentAttribute {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  key         String    // e.g., Fabricante
+  value       String    // e.g., LG
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+}
+
+model Maintenance {
+  id          Int       @id @default(autoincrement())
+  equipmentId Int
+  data        DateTime  @default(now())
+  descricao   String
+  responsavel String
+  observacao  String?
+  arquivoUrl  String?   // PDF or Image link
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+}
