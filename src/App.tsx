@@ -21,6 +21,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const AppContent: React.FC = () => {
   const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -38,8 +39,17 @@ const AppContent: React.FC = () => {
     }
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard />;
-      case 'equipments': return <EquipmentList onSelect={setSelectedId} onNew={() => setIsCreating(true)} onEdit={setEditingId} />;
+      case 'dashboard': return <Dashboard onNavigate={(tab, filter) => {
+        setActiveTab(tab);
+        if (filter) setStatusFilter(filter);
+      }} />;
+      case 'equipments': return <EquipmentList 
+        onSelect={setSelectedId} 
+        onNew={() => setIsCreating(true)} 
+        onEdit={setEditingId} 
+        initialStatus={statusFilter}
+        onFilterChange={setStatusFilter}
+      />;
       case 'maintenances': return <MaintenanceHistory />;
       case 'users': return user?.role === 'ADMIN' ? <UserManagement /> : <Dashboard />;
       default: return <Dashboard />;

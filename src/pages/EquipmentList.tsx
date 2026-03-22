@@ -18,18 +18,31 @@ interface EquipmentListProps {
   onSelect: (id: number) => void;
   onNew: () => void;
   onEdit: (id: number) => void;
+  initialStatus?: string;
+  onFilterChange?: (status: string) => void;
 }
 
-const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit }) => {
+const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, initialStatus = 'ALL', onFilterChange }) => {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
+  const [andarFilter, setAndarFilter] = useState<string>('ALL');
+  const [localFilter, setLocalFilter] = useState<string>('ALL');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   useEffect(() => {
     loadEquipments();
   }, []);
+
+  useEffect(() => {
+    setStatusFilter(initialStatus);
+  }, [initialStatus]);
+
+  const handleStatusChange = (status: string) => {
+    setStatusFilter(status);
+    onFilterChange?.(status);
+  };
 
   const loadEquipments = () => {
     setLoading(true);
@@ -37,6 +50,9 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit }
       .then(setEquipments)
       .finally(() => setLoading(false));
   };
+
+  const andares = ['ALL', ...new Set(equipments.map(e => e.andar))].sort();
+  const locais = ['ALL', ...new Set(equipments.map(e => e.local))].sort();
 
   const handleDelete = async (id: number) => {
     try {
@@ -56,8 +72,10 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit }
       e.local.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'ALL' || e.status === statusFilter;
+    const matchesAndar = andarFilter === 'ALL' || e.andar === andarFilter;
+    const matchesLocal = localFilter === 'ALL' || e.local === localFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesAndar && matchesLocal;
   });
 
   const getStatusColor = (status: string) => {
@@ -98,21 +116,37 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit }
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select 
               className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleStatusChange(e.target.value)}
             >
               <option value="ALL">TODOS OS STATUS</option>
               <option value="OPERACIONAL">OPERACIONAL</option>
               <option value="MANUTENCAO">MANUTENÇÃO</option>
               <option value="CRITICO">CRÍTICO</option>
             </select>
-            <button className="px-6 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] flex items-center gap-2 hover:bg-[#F9FAFB] uppercase tracking-widest rounded-none">
-              <Filter size={16} />
-              Mais Filtros
-            </button>
+            <select 
+              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
+              value={andarFilter}
+              onChange={(e) => setAndarFilter(e.target.value)}
+            >
+              <option value="ALL">TODOS OS ANDARES</option>
+              {andares.filter(a => a !== 'ALL').map(a => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+            <select 
+              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
+              value={localFilter}
+              onChange={(e) => setLocalFilter(e.target.value)}
+            >
+              <option value="ALL">TODOS OS LOCAIS</option>
+              {locais.filter(l => l !== 'ALL').map(l => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
           </div>
         </div>
 

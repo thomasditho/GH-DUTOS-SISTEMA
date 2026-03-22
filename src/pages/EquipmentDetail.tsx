@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, QrCode, History, Info, Plus, Download, FileText, User, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { cn, formatDate } from '../lib/utils';
@@ -205,6 +206,7 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
     </div>
   </div>;
 
+  const { user } = useAuth();
   const publicUrl = `${window.location.origin}/e/${equipment.publicId}`;
 
   return (
@@ -216,7 +218,7 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
           </button>
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-[#0A192F] tracking-tight">{equipment.codigo}</h2>
+              <h2 className="text-2xl font-black text-[#0A192F] tracking-tighter uppercase">{equipment.codigo}</h2>
               <span className={cn(
                 "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                 equipment.status === 'OPERACIONAL' ? 'bg-emerald-100 text-emerald-700' :
@@ -225,19 +227,21 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
                 {equipment.status}
               </span>
             </div>
-            <p className="text-[#6B7280] text-sm">{equipment.tipo} • {equipment.local} ({equipment.andar})</p>
+            <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mt-1">{equipment.tipo} • {equipment.local} ({equipment.andar})</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => onEdit(equipment.id)}
-            className="px-4 py-2 border border-[#E5E7EB] text-sm font-bold text-[#4B5563] hover:bg-slate-50 uppercase tracking-wider"
-          >
-            Editar Ativo
-          </button>
+          {user?.role === 'ADMIN' && (
+            <button 
+              onClick={() => onEdit(equipment.id)}
+              className="px-4 py-2 border-2 border-[#E5E7EB] text-xs font-black text-[#4B5563] hover:bg-slate-50 uppercase tracking-widest transition-all"
+            >
+              Editar Ativo
+            </button>
+          )}
           <button 
             onClick={() => setShowMaintenanceModal(true)}
-            className="px-4 py-2 bg-[#0A192F] text-white text-sm font-bold hover:bg-[#112240] uppercase tracking-wider flex items-center gap-2"
+            className="px-4 py-2 bg-[#0A192F] text-white text-xs font-black hover:bg-[#112240] uppercase tracking-widest flex items-center gap-2 shadow-lg border-b-4 border-[#FF6B00] transition-all"
           >
             <Plus size={16} />
             Registrar Manutenção
@@ -249,23 +253,25 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-8">
           <section className="bg-white border border-[#E5E7EB] shadow-sm">
-            <div className="p-4 border-b border-[#E5E7EB] bg-[#F9FAFB] flex items-center gap-2">
-              <Info size={16} className="text-[#0A192F]" />
-              <h3 className="text-xs font-bold text-[#0A192F] uppercase tracking-widest">Informações Técnicas</h3>
+            <div className="p-4 border-b border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Info size={16} className="text-[#0A192F]" />
+                <h3 className="text-xs font-black text-[#0A192F] uppercase tracking-[0.2em]">Informações Técnicas</h3>
+              </div>
             </div>
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-12">
+            <div className="p-8 grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-12">
               <div>
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">Data de Instalação</p>
-                <p className="text-sm font-medium text-[#0A192F] mt-1">{formatDate(equipment.dataInstalacao)}</p>
+                <p className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-[0.2em]">Data de Instalação</p>
+                <p className="text-sm font-bold text-[#0A192F] mt-1">{formatDate(equipment.dataInstalacao)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">Periodicidade</p>
-                <p className="text-sm font-medium text-[#0A192F] mt-1">{equipment.periodicidadeManutencao ? `${equipment.periodicidadeManutencao} dias` : 'Não definida'}</p>
+                <p className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-[0.2em]">Periodicidade de Revisão</p>
+                <p className="text-sm font-bold text-[#0A192F] mt-1">{equipment.periodicidadeManutencao ? `${equipment.periodicidadeManutencao} dias` : 'Não definida'}</p>
               </div>
               {equipment.attributes.map((attr: any) => (
                 <div key={attr.id}>
-                  <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-widest">{attr.key}</p>
-                  <p className="text-sm font-medium text-[#0A192F] mt-1">{attr.value}</p>
+                  <p className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-[0.2em]">{attr.key}</p>
+                  <p className="text-sm font-bold text-[#0A192F] mt-1">{attr.value}</p>
                 </div>
               ))}
             </div>
@@ -275,36 +281,36 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
             <div className="p-4 border-b border-[#E5E7EB] bg-[#F9FAFB] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <History size={16} className="text-[#0A192F]" />
-                <h3 className="text-xs font-bold text-[#0A192F] uppercase tracking-widest">Linha do Tempo de Intervenções</h3>
+                <h3 className="text-xs font-black text-[#0A192F] uppercase tracking-[0.2em]">Linha do Tempo de Intervenções</h3>
               </div>
               <button 
                 onClick={generateReport}
-                className="text-[10px] font-bold text-[#0A192F] flex items-center gap-1 hover:underline tracking-widest"
+                className="text-[10px] font-black text-[#0A192F] flex items-center gap-2 hover:underline tracking-widest border border-[#E5E7EB] px-3 py-1.5 bg-white"
               >
                 <Download size={14} /> EXPORTAR HISTÓRICO (PDF)
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               {equipment.maintenances.length === 0 ? (
-                <div className="text-center py-8 text-[#9CA3AF] italic text-sm">Nenhuma manutenção registrada.</div>
+                <div className="text-center py-12 text-[#9CA3AF] font-bold uppercase tracking-widest text-xs border-2 border-dashed border-[#F3F4F6]">Nenhuma manutenção registrada.</div>
               ) : (
                 <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-[#E5E7EB] before:via-[#E5E7EB] before:to-transparent">
                   {equipment.maintenances.map((m: any) => (
-                    <div key={m.id} className="relative flex items-start gap-6">
-                      <div className="absolute left-0 w-10 h-10 bg-white border-2 border-[#0A192F] flex items-center justify-center z-10">
-                        <Clock size={16} className="text-[#0A192F]" />
+                    <div key={m.id} className="relative flex items-start gap-6 group">
+                      <div className="absolute left-0 w-10 h-10 bg-white border-2 border-[#0A192F] flex items-center justify-center z-10 shadow-sm group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+                        <Clock size={18} />
                       </div>
-                      <div className="ml-12 flex-1 bg-[#F9FAFB] p-4 border border-[#E5E7EB]">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                          <span className="text-sm font-bold text-[#0A192F]">{formatDate(m.data)}</span>
-                          <div className="flex items-center gap-2 text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">
-                            <User size={12} /> {m.responsavel}
+                      <div className="ml-12 flex-1 bg-[#F9FAFB] p-6 border border-[#E5E7EB] hover:border-[#0A192F] transition-all">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                          <span className="text-sm font-black text-[#0A192F]">{formatDate(m.data)}</span>
+                          <div className="flex items-center gap-2 text-[10px] font-black text-[#6B7280] uppercase tracking-widest">
+                            <User size={12} className="text-[#9CA3AF]" /> {m.responsavel}
                           </div>
                         </div>
-                        <p className="text-sm text-[#4B5563] leading-relaxed">{m.descricao}</p>
+                        <p className="text-sm text-[#4B5563] leading-relaxed font-medium">{m.descricao}</p>
                         {m.observacao && (
-                          <div className="mt-3 pt-3 border-t border-[#E5E7EB] text-xs text-[#6B7280] italic">
-                            Obs: {m.observacao}
+                          <div className="mt-4 pt-4 border-t border-[#E5E7EB] text-xs text-[#6B7280] italic bg-white p-3">
+                            " {m.observacao} "
                           </div>
                         )}
                         {m.arquivoUrl && (
@@ -312,9 +318,9 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
                             href={m.arquivoUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#0A192F] hover:underline bg-white px-3 py-2 border border-[#E5E7EB]"
+                            className="mt-6 inline-flex items-center gap-3 text-xs font-black text-[#0A192F] hover:bg-[#0A192F] hover:text-white px-4 py-3 border-2 border-[#0A192F] transition-all uppercase tracking-widest"
                           >
-                            <FileText size={14} /> VER RELATÓRIO TÉCNICO (PDF)
+                            <FileText size={16} /> Acessar Relatório Técnico (PDF)
                           </a>
                         )}
                       </div>
@@ -328,28 +334,28 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
 
         {/* QR & Label */}
         <div className="space-y-8">
-          <section className="bg-white border border-[#E5E7EB] shadow-sm p-6 text-center">
-            <h3 className="text-xs font-bold text-[#0A192F] uppercase tracking-widest mb-6">Identificador QR Code</h3>
-            <div className="flex justify-center mb-6 p-4 bg-white border border-[#E5E7EB]">
-              <QRCodeCanvas id="qr-canvas" value={publicUrl} size={180} level="H" includeMargin={true} />
+          <section className="bg-white border border-[#E5E7EB] shadow-lg p-8 text-center border-t-4 border-t-[#0A192F]">
+            <h3 className="text-xs font-black text-[#0A192F] uppercase tracking-[0.3em] mb-8">Identificador QR Code</h3>
+            <div className="flex justify-center mb-8 p-6 bg-white border-2 border-[#F3F4F6] shadow-inner">
+              <QRCodeCanvas id="qr-canvas" value={publicUrl} size={200} level="H" includeMargin={true} />
             </div>
-            <p className="text-[10px] text-[#6B7280] break-all mb-6 font-mono">{publicUrl}</p>
+            <p className="text-[10px] text-[#9CA3AF] break-all mb-8 font-mono bg-[#F9FAFB] p-2 border border-[#E5E7EB]">{publicUrl}</p>
             <button 
               onClick={generateLabel}
-              className="w-full py-3 border-2 border-[#0A192F] text-[#0A192F] font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#0A192F] hover:text-white transition-all"
+              className="w-full py-4 bg-[#0A192F] text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-[#112240] transition-all shadow-xl border-b-4 border-[#FF6B00]"
             >
-              <Download size={18} />
+              <Download size={20} />
               Gerar Etiqueta PDF
             </button>
           </section>
 
-          <section className="bg-[#0A192F] p-6 text-white">
-            <div className="flex items-start gap-3">
-              <AlertCircle size={20} className="text-amber-400 shrink-0" />
+          <section className="bg-white border-l-4 border-l-amber-500 p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="p-2 bg-amber-50 text-amber-600"><AlertCircle size={20} /></div>
               <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider mb-2">Próxima Manutenção</h4>
-                <p className="text-xs text-white/70 leading-relaxed">
-                  Baseado na periodicidade de {equipment.periodicidadeManutencao || 'N/A'} dias, a próxima revisão deve ocorrer em breve.
+                <h4 className="text-xs font-black text-[#0A192F] uppercase tracking-widest mb-2">Próxima Manutenção</h4>
+                <p className="text-xs text-[#6B7280] leading-relaxed font-medium">
+                  Baseado na periodicidade de {equipment.periodicidadeManutencao || 'N/A'} dias, o sistema monitora automaticamente o vencimento deste ativo.
                 </p>
               </div>
             </div>

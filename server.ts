@@ -77,7 +77,43 @@ async function startServer() {
         orderBy: { data: 'desc' },
         include: { equipment: true }
       });
-      res.json({ totalEquipments, statusCounts, recentMaintenances });
+
+      // Smart Maintenance Alerts
+      const allEquipments = await prisma.equipment.findMany({
+        include: {
+          maintenances: {
+            orderBy: { data: 'desc' },
+            take: 1
+          }
+        }
+      });
+
+      const now = new Date();
+      let overdue = 0;
+      let upcoming = 0;
+
+      allEquipments.forEach(eq => {
+        if (!eq.periodicidadeManutencao) return;
+
+        const lastMaintenance = eq.maintenances[0]?.data || eq.dataInstalacao || eq.createdAt;
+        const nextMaintenance = new Date(lastMaintenance);
+        nextMaintenance.setDate(nextMaintenance.getDate() + eq.periodicidadeManutencao);
+
+        const diffDays = Math.ceil((nextMaintenance.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          overdue++;
+        } else if (diffDays <= 15) {
+          upcoming++;
+        }
+      });
+
+      res.json({ 
+        totalEquipments, 
+        statusCounts, 
+        recentMaintenances,
+        maintenanceAlerts: { overdue, upcoming }
+      });
     } catch (err) {
       console.error('Dashboard Stats Error:', err);
       res.status(500).json({ error: 'Erro ao carregar estatísticas' });
@@ -167,6 +203,14 @@ async function startServer() {
   });
 
   // Maintenances
+  app.get('/api/maintenances', authenticate, async (req, res) => {
+    const maintenances = await prisma.maintenance.findMany({
+      include: { equipment: true },
+      orderBy: { data: 'desc' }
+    });
+    res.json(maintenances);
+  });
+
   app.post('/api/maintenances', authenticate, upload.single('arquivo'), async (req, res) => {
     const { equipmentId, data, descricao, responsavel, observacao } = req.body;
     const arquivoUrl = req.file ? `/uploads/${req.file.filename}` : null;

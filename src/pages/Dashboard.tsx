@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
 import { Package, CheckCircle, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
-import { formatDate } from '../lib/utils';
+import { formatDate, cn } from '../lib/utils';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNavigate?: (tab: string, filter?: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,30 +54,43 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {['OPERACIONAL', 'MANUTENCAO', 'CRITICO'].map(status => {
-          const count = Array.isArray(stats?.statusCounts) 
-            ? stats.statusCounts.find((s: any) => s.status === status)?._count?._all || 0 
-            : 0;
-          const Icon = status === 'OPERACIONAL' ? CheckCircle : status === 'MANUTENCAO' ? Clock : AlertTriangle;
-          const colors = getStatusColor(status);
-          
-          return (
-            <div key={status} className={cn("bg-white p-8 border-l-4 shadow-sm rounded-none", 
-              status === 'OPERACIONAL' ? 'border-emerald-500' : 
-              status === 'MANUTENCAO' ? 'border-amber-500' : 'border-red-500'
-            )}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em]">{status}</p>
-                  <p className="text-4xl font-black text-[#0A192F] mt-2">{count}</p>
-                </div>
-                <div className={cn("p-4", colors.split(' ')[1], colors.split(' ')[0])}>
-                  <Icon size={28} />
-                </div>
-              </div>
+        <div className="bg-white p-8 border-l-4 border-red-500 shadow-sm rounded-none">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em]">Manutenções Vencidas</p>
+              <p className="text-4xl font-black text-red-600 mt-2">{stats.maintenanceAlerts?.overdue || 0}</p>
             </div>
-          );
-        })}
+            <div className="p-4 bg-red-50 text-red-600">
+              <AlertTriangle size={28} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 border-l-4 border-amber-500 shadow-sm rounded-none">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em]">Próximos 15 dias</p>
+              <p className="text-4xl font-black text-amber-600 mt-2">{stats.maintenanceAlerts?.upcoming || 0}</p>
+            </div>
+            <div className="p-4 bg-amber-50 text-amber-600">
+              <Clock size={28} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 border-l-4 border-emerald-500 shadow-sm rounded-none">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em]">Operacionais</p>
+              <p className="text-4xl font-black text-emerald-600 mt-2">
+                {stats.statusCounts.find((s: any) => s.status === 'OPERACIONAL')?._count?._all || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-emerald-50 text-emerald-600">
+              <CheckCircle size={28} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -81,7 +98,10 @@ const Dashboard: React.FC = () => {
         <div className="lg:col-span-2 bg-white border border-[#E5E7EB] shadow-sm rounded-none">
           <div className="p-6 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F9FAFB]">
             <h3 className="font-black text-[#0A192F] uppercase tracking-[0.2em] text-xs">Últimas Intervenções</h3>
-            <button className="text-[10px] font-bold text-[#0A192F] flex items-center gap-1 hover:underline tracking-widest">
+            <button 
+              onClick={() => onNavigate?.('maintenances')}
+              className="text-[10px] font-bold text-[#0A192F] flex items-center gap-1 hover:underline tracking-widest"
+            >
               HISTÓRICO COMPLETO <ArrowRight size={14} />
             </button>
           </div>
@@ -131,7 +151,10 @@ const Dashboard: React.FC = () => {
               </div>
             )}
             
-            <button className="w-full py-4 bg-[#0A192F] text-white font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-[#112240] transition-all">
+            <button 
+              onClick={() => onNavigate?.('equipments', 'CRITICO')}
+              className="w-full py-4 bg-[#0A192F] text-white font-bold text-[10px] uppercase tracking-[0.2em] hover:bg-[#112240] transition-all"
+            >
               Ver Ativos Críticos
             </button>
           </div>
@@ -141,5 +164,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-import { cn } from '../lib/utils';
 export default Dashboard;
