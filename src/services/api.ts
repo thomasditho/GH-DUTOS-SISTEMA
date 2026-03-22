@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const fetchApi = async (endpoint: string, options: any = {}) => {
   const token = localStorage.getItem('gh_dutos_token');

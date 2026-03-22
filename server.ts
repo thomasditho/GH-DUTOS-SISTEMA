@@ -10,7 +10,7 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'gh-dutos-secret-2026';
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Setup multer for local uploads (fallback for Supabase/S3)
 const storage = multer.diskStorage({
@@ -252,8 +252,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(Number(PORT), "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
