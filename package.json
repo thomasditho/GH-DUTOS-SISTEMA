@@ -1,5 +1,6 @@
 {
-  "name": "react-example",
+  "name": "gh-dutos-gestao-ativos",
+  "description": "Sistema de rastreabilidade de equipamentos via QR Code e controle de manutenção técnica.",
   "private": true,
   "version": "0.0.0",
   "type": "module",

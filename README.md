@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# GH DUTOS - Gestão de Ativos
 
-# Run and deploy your AI Studio app
+Sistema de rastreabilidade de equipamentos via QR Code e controle de manutenção técnica.
 
-This contains everything you need to run your app locally.
+## Funcionalidades
 
-View your app in AI Studio: https://ai.studio/apps/85cc5033-fa30-4040-a3d2-3760d9442d25
+- Cadastro de equipamentos e ativos
+- Geração e leitura de QR Codes
+- Controle de manutenções preventivas e corretivas
+- Dashboard de indicadores
+- Exportação de relatórios em PDF e Excel
 
-## Run Locally
+## Tecnologias
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- React
+- TypeScript
+- Tailwind CSS
+- Prisma
+- Express
+- SQLite
