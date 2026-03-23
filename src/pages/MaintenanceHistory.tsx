@@ -96,12 +96,12 @@ const MaintenanceHistory: React.FC = () => {
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-[#0A192F] tracking-tighter uppercase">Histórico de Manutenções</h2>
+          <h2 className="text-3xl font-black text-brand-navy tracking-tighter uppercase">Histórico de Manutenções</h2>
           <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mt-1">Registro global de todas as intervenções técnicas</p>
         </div>
         <button 
           onClick={generateGlobalReport}
-          className="bg-[#0A192F] text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#112240] transition-all shadow-xl rounded-none border-b-4 border-[#FF6B00]"
+          className="bg-brand-navy text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-brand-teal transition-all shadow-xl rounded-none border-b-4 border-brand-teal"
         >
           <Download size={18} />
           Exportar Relatório Global
@@ -115,7 +115,7 @@ const MaintenanceHistory: React.FC = () => {
             <input 
               type="text" 
               placeholder="BUSCAR POR EQUIPAMENTO OU RESPONSÁVEL..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-0 focus:border-[#0A192F] rounded-none"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-0 focus:border-brand-navy rounded-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -146,11 +146,11 @@ const MaintenanceHistory: React.FC = () => {
                 </tr>
               ) : filtered.map((m) => (
                 <tr key={m.id} className="hover:bg-[#F8F9FA] transition-colors group">
-                  <td className="px-6 py-4 text-sm font-bold text-[#0A192F]">{formatDate(m.data)}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-brand-navy">{formatDate(m.data)}</td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Package size={14} className="text-[#9CA3AF]" />
-                      <span className="text-sm font-bold text-[#0A192F]">{m.equipment.codigo}</span>
+                      <span className="text-sm font-bold text-brand-navy">{m.equipment.codigo}</span>
                     </div>
                     <div className="text-[10px] text-[#9CA3AF] uppercase font-bold">{m.equipment.tipo}</div>
                   </td>
@@ -167,7 +167,7 @@ const MaintenanceHistory: React.FC = () => {
                         href={m.arquivoUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="p-2 text-[#0A192F] hover:bg-[#0A192F] hover:text-white transition-all inline-block border border-[#E5E7EB]"
+                        className="p-2 text-brand-navy hover:bg-brand-navy hover:text-white transition-all inline-block border border-[#E5E7EB]"
                       >
                         <FileText size={18} />
                       </a>

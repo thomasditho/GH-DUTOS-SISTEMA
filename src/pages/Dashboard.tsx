@@ -78,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
         <button 
           onClick={() => setShowScanner(true)}
-          className="bg-[#FF6B00] text-white px-8 py-4 flex items-center justify-center gap-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-[#E66000] transition-all shadow-xl rounded-none border-b-4 border-[#0A192F]"
+          className="bg-brand-teal text-white px-8 py-4 flex items-center justify-center gap-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-brand-navy transition-all shadow-xl rounded-none border-b-4 border-brand-navy"
         >
           <Camera size={20} />
           ESCANEAR QR CODE
@@ -91,49 +91,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           onClick={() => onNavigate?.('equipments', 'NEW')}
           className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
         >
-          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+          <div className="p-3 bg-slate-100 text-brand-navy group-hover:bg-brand-navy group-hover:text-white transition-all">
             <Plus size={20} />
           </div>
-          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Novo Ativo</span>
+          <span className="text-[10px] font-black text-brand-navy uppercase tracking-widest">Novo Ativo</span>
         </button>
         <button 
           onClick={() => onNavigate?.('equipments', 'IMPORT')}
           className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
         >
-          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+          <div className="p-3 bg-slate-100 text-brand-navy group-hover:bg-brand-navy group-hover:text-white transition-all">
             <FileSpreadsheet size={20} />
           </div>
-          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Importar</span>
+          <span className="text-[10px] font-black text-brand-navy uppercase tracking-widest">Importar</span>
         </button>
         <button 
           onClick={() => onNavigate?.('maintenances')}
           className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
         >
-          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+          <div className="p-3 bg-slate-100 text-brand-navy group-hover:bg-brand-navy group-hover:text-white transition-all">
             <History size={20} />
           </div>
-          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Histórico</span>
+          <span className="text-[10px] font-black text-brand-navy uppercase tracking-widest">Histórico</span>
         </button>
         <button 
           onClick={() => onNavigate?.('calendar')}
           className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
         >
-          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+          <div className="p-3 bg-slate-100 text-brand-navy group-hover:bg-brand-navy group-hover:text-white transition-all">
             <Clock size={20} />
           </div>
-          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Agenda</span>
+          <span className="text-[10px] font-black text-brand-navy uppercase tracking-widest">Agenda</span>
         </button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-8 border-l-4 border-[#0A192F] shadow-sm rounded-none">
+        <div className="bg-white p-8 border-l-4 border-brand-navy shadow-sm rounded-none">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-[0.2em]">Total de Ativos</p>
-              <p className="text-4xl font-black text-[#0A192F] mt-2">{stats.totalEquipments}</p>
+              <p className="text-4xl font-black text-brand-navy mt-2">{stats.totalEquipments}</p>
             </div>
-            <div className="p-4 bg-slate-50 text-[#0A192F]">
+            <div className="p-4 bg-slate-50 text-brand-navy">
               <Package size={28} />
             </div>
           </div>
@@ -204,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0px', fontSize: '12px', fontWeight: 'bold' }}
                 />
-                <Bar dataKey="value" fill="#0A192F" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="value" fill="#338080" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
