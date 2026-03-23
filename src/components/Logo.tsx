@@ -9,29 +9,43 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ className, variant = 'dark', size = 'md' }) => {
   const isDark = variant === 'dark';
+  const navy = '#000040';
+  const gray = '#E5E7EB';
   
   const sizeClasses = {
-    sm: 'text-lg',
-    md: 'text-2xl',
-    lg: 'text-4xl',
+    sm: { container: 'scale-50', text: 'text-lg', sub: 'text-[6px]' },
+    md: { container: 'scale-75', text: 'text-2xl', sub: 'text-[8px]' },
+    lg: { container: 'scale-100', text: 'text-4xl', sub: 'text-[10px]' },
   };
 
-  const barClasses = {
-    sm: 'h-0.5 mb-0.5',
-    md: 'h-1 mb-1',
-    lg: 'h-1.5 mb-1.5',
-  };
+  const currentSize = sizeClasses[size];
 
   return (
-    <div className={cn("flex flex-col items-start font-sans", className)}>
-      <div className={cn("bg-[#FF6B00] w-full", barClasses[size])} />
+    <div className={cn("flex flex-col items-center font-sans", className, currentSize.container)}>
+      <div className="relative flex items-center justify-center">
+        {/* Diamond Grid Pattern */}
+        <div className="absolute w-24 h-24 rotate-45 border border-brand-gray/50 flex items-center justify-center overflow-hidden">
+          <div className="grid grid-cols-6 grid-rows-6 w-full h-full opacity-30">
+            {[...Array(36)].map((_, i) => (
+              <div key={i} className="border-[0.5px] border-brand-gray" />
+            ))}
+          </div>
+        </div>
+        
+        {/* Logo Text */}
+        <div className="relative z-10 flex items-baseline gap-2">
+          <span className={cn("font-black tracking-tighter", currentSize.text, isDark ? "text-brand-navy" : "text-white")}>GH</span>
+          <span className={cn("font-light tracking-widest", currentSize.text, isDark ? "text-brand-navy" : "text-white")}>DUTOS</span>
+        </div>
+      </div>
+      
+      {/* Subtitle */}
       <div className={cn(
-        "font-black tracking-tighter leading-none flex items-baseline gap-1",
-        sizeClasses[size],
-        isDark ? "text-[#0A192F]" : "text-white"
+        "mt-1 font-medium uppercase tracking-[0.4em] border-t border-brand-navy/20 pt-1",
+        currentSize.sub,
+        isDark ? "text-brand-navy" : "text-white"
       )}>
-        <span>GH</span>
-        <span className="font-light">DUTOS</span>
+        Instalação & Manutenção
       </div>
     </div>
   );
