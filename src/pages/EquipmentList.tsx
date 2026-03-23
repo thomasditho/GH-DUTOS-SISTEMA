@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
-import { Plus, Search, Filter, QrCode, Eye, Edit2, ChevronRight, ChevronLeft, Trash2, X } from 'lucide-react';
+import { Plus, Search, Eye, Edit2, ChevronRight, ChevronLeft, Trash2, X, Upload, FileSpreadsheet, AlertCircle } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
 import { toast } from 'sonner';
+import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 
 interface Equipment {
   id: number;
@@ -30,25 +32,98 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
   const [andarFilter, setAndarFilter] = useState<string>('ALL');
   const [localFilter, setLocalFilter] = useState<string>('ALL');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
-
-  useEffect(() => {
-    loadEquipments();
-  }, []);
-
-  useEffect(() => {
-    setStatusFilter(initialStatus);
-  }, [initialStatus]);
-
-  const handleStatusChange = (status: string) => {
-    setStatusFilter(status);
-    onFilterChange?.(status);
-  };
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importData, setImportData] = useState<any[]>([]);
 
   const loadEquipments = () => {
     setLoading(true);
     fetchApi('/api/equipments')
       .then(setEquipments)
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadEquipments();
+  }, []);
+
+  useEffect(() => {
+    if (initialStatus === 'IMPORT') {
+      setShowImportModal(true);
+      setStatusFilter('ALL');
+      onFilterChange?.('ALL');
+    } else {
+      setStatusFilter(initialStatus);
+    }
+  }, [initialStatus, onFilterChange]);
+
+  const handleStatusChange = (status: string) => {
+    setStatusFilter(status);
+    onFilterChange?.(status);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    const extension = file.name.split('.').pop()?.toLowerCase();
+
+    if (extension === 'csv') {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          setImportData(results.data);
+        },
+        error: (err) => {
+          toast.error('Erro ao ler arquivo CSV: ' + err.message);
+        }
+      });
+    } else if (extension === 'xlsx' || extension === 'xls') {
+      reader.onload = (evt) => {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        setImportData(data);
+      };
+      reader.readAsBinaryString(file);
+    } else {
+      toast.error('Formato de arquivo não suportado. Use CSV ou Excel.');
+    }
+  };
+
+  const processImport = async () => {
+    if (importData.length === 0) return;
+    setImporting(true);
+    try {
+      // Map common spreadsheet headers to our API fields
+      const mappedData = importData.map(row => ({
+        codigo: row.codigo || row.Codigo || row.CÓDIGO || row.ID || '',
+        tipo: row.tipo || row.Tipo || row.TIPO || row.Equipamento || '',
+        local: row.local || row.Local || row.LOCAL || row.Setor || '',
+        andar: row.andar || row.Andar || row.ANDAR || row.Pavimento || '',
+        status: row.status || row.Status || row.STATUS || 'OPERACIONAL',
+        periodicidadeManutencao: row.periodicidade || row.Periodicidade || row.Dias || 90,
+        dataInstalacao: row.dataInstalacao || row.Data || null
+      })).filter(item => item.codigo);
+
+      const response = await fetchApi('/api/equipments/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ equipments: mappedData })
+      });
+
+      toast.success(`${response.count} equipamentos importados com sucesso!`);
+      setShowImportModal(false);
+      setImportData([]);
+      loadEquipments();
+    } catch (err) {
+      toast.error('Erro ao importar dados');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const andares = ['ALL', ...new Set(equipments.map(e => e.andar))].sort();
@@ -60,7 +135,7 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
       toast.success('Equipamento excluído com sucesso!');
       setEquipments(prev => prev.filter(e => e.id !== id));
       setShowDeleteConfirm(null);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao excluir equipamento');
     }
   };
@@ -94,13 +169,22 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
           <h2 className="text-3xl font-black text-[#0A192F] tracking-tighter uppercase">Inventário de Ativos</h2>
           <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mt-1">Gestão de equipamentos e infraestrutura</p>
         </div>
-        <button 
-          onClick={onNew}
-          className="bg-[#0A192F] text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#112240] transition-all shadow-xl rounded-none border-b-4 border-[#FF6B00]"
-        >
-          <Plus size={18} />
-          Novo Equipamento
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <button 
+            onClick={() => setShowImportModal(true)}
+            className="w-full sm:w-auto px-6 py-4 border-2 border-[#0A192F] text-[#0A192F] flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all rounded-none"
+          >
+            <FileSpreadsheet size={18} />
+            Importar Planilha
+          </button>
+          <button 
+            onClick={onNew}
+            className="w-full sm:w-auto bg-[#0A192F] text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#112240] transition-all shadow-xl rounded-none border-b-4 border-[#FF6B00]"
+          >
+            <Plus size={18} />
+            Novo Equipamento
+          </button>
+        </div>
       </header>
 
       <div className="bg-white border border-[#E5E7EB] shadow-sm rounded-none">
@@ -231,7 +315,100 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A192F]/80 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl shadow-2xl p-8 rounded-none border-t-4 border-[#0A192F]">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-black text-[#0A192F] uppercase tracking-tight">Importar Equipamentos</h3>
+              <button onClick={() => setShowImportModal(false)} className="text-[#9CA3AF] hover:text-[#0A192F]">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-4 flex gap-4">
+                <AlertCircle className="text-amber-600 shrink-0" size={20} />
+                <div className="text-xs text-amber-800 leading-relaxed">
+                  <p className="font-bold uppercase mb-1">Instruções de Importação:</p>
+                  <p>O arquivo deve conter as colunas: <b>codigo, tipo, local, andar</b>.</p>
+                  <p className="mt-1 italic">Formatos aceitos: .csv, .xlsx, .xls</p>
+                </div>
+              </div>
+
+              {!importData.length ? (
+                <div className="border-2 border-dashed border-[#E5E7EB] p-12 text-center">
+                  <input 
+                    type="file" 
+                    id="bulk-upload" 
+                    className="hidden" 
+                    accept=".csv,.xlsx,.xls"
+                    onChange={handleFileUpload}
+                  />
+                  <label 
+                    htmlFor="bulk-upload"
+                    className="cursor-pointer flex flex-col items-center gap-4"
+                  >
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-[#0A192F]">
+                      <Upload size={32} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#0A192F] uppercase tracking-widest">Clique para selecionar arquivo</p>
+                      <p className="text-[10px] text-[#9CA3AF] mt-1 uppercase">Arraste sua planilha aqui</p>
+                    </div>
+                  </label>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="max-height-[300px] overflow-y-auto border border-[#E5E7EB]">
+                    <table className="w-full text-left text-[10px]">
+                      <thead className="bg-[#F9FAFB] sticky top-0">
+                        <tr className="border-b border-[#E5E7EB] font-bold uppercase text-[#6B7280]">
+                          <th className="p-2">Código</th>
+                          <th className="p-2">Tipo</th>
+                          <th className="p-2">Local</th>
+                          <th className="p-2">Andar</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E5E7EB]">
+                        {importData.slice(0, 10).map((row, i) => (
+                          <tr key={i}>
+                            <td className="p-2">{row.codigo || row.Codigo || row.CÓDIGO || row.ID}</td>
+                            <td className="p-2">{row.tipo || row.Tipo || row.TIPO || row.Equipamento}</td>
+                            <td className="p-2">{row.local || row.Local || row.LOCAL || row.Setor}</td>
+                            <td className="p-2">{row.andar || row.Andar || row.ANDAR || row.Pavimento}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {importData.length > 10 && (
+                      <div className="p-2 text-center bg-[#F9FAFB] text-[10px] text-[#9CA3AF] font-bold italic">
+                        + {importData.length - 10} outros registros...
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setImportData([])}
+                      className="flex-1 py-4 border border-[#E5E7EB] text-[#4B5563] font-bold text-xs uppercase tracking-widest hover:bg-slate-50"
+                    >
+                      Trocar Arquivo
+                    </button>
+                    <button 
+                      onClick={processImport}
+                      disabled={importing}
+                      className="flex-1 py-4 bg-[#0A192F] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#112240] disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {importing ? 'Processando...' : `Importar ${importData.length} Ativos`}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A192F]/80 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md shadow-2xl p-8 rounded-none border-t-4 border-red-600">

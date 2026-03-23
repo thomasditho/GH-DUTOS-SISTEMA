@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Search, Filter, Download, FileText, User, Package } from 'lucide-react';
+import { Search, Download, FileText, User, Package } from 'lucide-react';
 import { fetchApi } from '../services/api';
 import { formatDate } from '../lib/utils';
 import { jsPDF } from 'jspdf';
@@ -9,11 +9,16 @@ const MaintenanceHistory: React.FC = () => {
   const [maintenances, setMaintenances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [printSettings, setPrintSettings] = useState<any>(null);
 
   useEffect(() => {
-    fetchApi('/api/maintenances')
-      .then(setMaintenances)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetchApi('/api/maintenances'),
+      fetchApi('/api/settings/print')
+    ]).then(([m, s]) => {
+      setMaintenances(m);
+      setPrintSettings(s);
+    }).finally(() => setLoading(false));
   }, []);
 
   const filtered = maintenances.filter(m => 
@@ -25,17 +30,37 @@ const MaintenanceHistory: React.FC = () => {
   const generateGlobalReport = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const primaryColor = printSettings?.reportPrimaryColor || '#0A192F';
     
+    // Convert hex to RGB for jspdf
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b];
+    };
+    const rgb = hexToRgb(primaryColor);
+
     // Header
-    doc.setFillColor(10, 25, 47);
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
     doc.rect(0, 0, pageWidth, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RELATÓRIO GLOBAL DE MANUTENÇÕES', 20, 25);
     
-    doc.setFontSize(10);
+    if (printSettings?.logoUrl) {
+      try {
+        doc.addImage(printSettings.logoUrl, 'PNG', 20, 10, 30, 20);
+      } catch (e) {
+        console.error('Error adding logo to PDF', e);
+      }
+    }
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RELATÓRIO GLOBAL DE MANUTENÇÕES', printSettings?.logoUrl ? 60 : 20, 25);
+    
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
+    doc.text(printSettings?.reportHeader || '', pageWidth - 20, 15, { align: 'right' });
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, 25, { align: 'right' });
 
     const tableData = filtered.map(m => [
@@ -50,10 +75,19 @@ const MaintenanceHistory: React.FC = () => {
       startY: 50,
       head: [['Data', 'Ativo', 'Tipo', 'Descrição', 'Responsável']],
       body: tableData,
-      headStyles: { fillColor: [10, 25, 47] },
+      headStyles: { fillColor: rgb },
       styles: { fontSize: 8 },
       columnStyles: { 3: { cellWidth: 60 } }
     });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(printSettings?.reportFooter || '', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+    }
 
     doc.save(`relatorio-global-${new Date().toISOString().split('T')[0]}.pdf`);
   };

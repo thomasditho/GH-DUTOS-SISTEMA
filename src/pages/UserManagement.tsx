@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Plus, Search, Shield, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, X } from 'lucide-react';
 import { fetchApi } from '../services/api';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
@@ -35,7 +35,7 @@ const UserManagement: React.FC = () => {
     try {
       const data = await fetchApi('/api/users');
       setUsers(data);
-    } catch (err) {
+    } catch {
       toast.error('Erro ao carregar usuários');
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ const UserManagement: React.FC = () => {
       await fetchApi(`/api/users/${id}`, { method: 'DELETE' });
       toast.success('Usuário excluído');
       loadUsers();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao excluir usuário');
     }
   };

@@ -10,6 +10,8 @@ import EquipmentForm from './pages/EquipmentForm';
 import PublicEquipment from './pages/PublicEquipment';
 import MaintenanceHistory from './pages/MaintenanceHistory';
 import UserManagement from './pages/UserManagement';
+import CalendarView from './pages/CalendarView';
+import PrintSettings from './pages/PrintSettings';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, loading } = useAuth();
@@ -41,7 +43,14 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard onNavigate={(tab, filter) => {
         setActiveTab(tab);
-        if (filter) setStatusFilter(filter);
+        if (filter === 'NEW') {
+          setIsCreating(true);
+        } else if (filter === 'IMPORT') {
+          // We'll pass a prop to EquipmentList to show import modal
+          setStatusFilter('IMPORT');
+        } else if (filter) {
+          setStatusFilter(filter);
+        }
       }} />;
       case 'equipments': return <EquipmentList 
         onSelect={setSelectedId} 
@@ -51,6 +60,8 @@ const AppContent: React.FC = () => {
         onFilterChange={setStatusFilter}
       />;
       case 'maintenances': return <MaintenanceHistory />;
+      case 'calendar': return <CalendarView />;
+      case 'settings': return user?.role === 'ADMIN' ? <PrintSettings /> : <Dashboard />;
       case 'users': return user?.role === 'ADMIN' ? <UserManagement /> : <Dashboard />;
       default: return <Dashboard />;
     }

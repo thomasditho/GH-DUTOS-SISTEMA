@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
-import { Package, CheckCircle, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
-import { formatDate, cn } from '../lib/utils';
+import { Package, CheckCircle, AlertTriangle, Clock, ArrowRight, BarChart3, PieChart as PieChartIcon, Camera, Plus, FileSpreadsheet, History } from 'lucide-react';
+import { formatDate } from '../lib/utils';
+import QRScannerModal from '../components/QRScannerModal';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts';
 
 interface DashboardProps {
   onNavigate?: (tab: string, filter?: string) => void;
@@ -10,12 +23,33 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     fetchApi('/api/dashboard/stats')
       .then(setStats)
       .finally(() => setLoading(false));
   }, []);
+
+  const handleScan = (decodedText: string) => {
+    setShowScanner(false);
+    // Extract publicId from URL (e.g., https://.../e/demo-ativo-01)
+    const parts = decodedText.split('/');
+    const publicId = parts[parts.length - 1];
+    
+    if (publicId) {
+      // Find equipment by publicId
+      fetchApi(`/api/public/equipment/${publicId}`)
+        .then(eq => {
+          if (eq && eq.id) {
+            onNavigate?.('equipments', eq.id.toString());
+          }
+        })
+        .catch(() => {
+          alert('QR Code inválido ou equipamento não encontrado.');
+        });
+    }
+  };
 
   if (loading || !stats) return <div className="animate-pulse space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -24,21 +58,72 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     <div className="h-96 bg-white border border-[#E5E7EB]" />
   </div>;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'OPERACIONAL': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
-      case 'MANUTENCAO': return 'text-amber-600 bg-amber-50 border-amber-100';
-      case 'CRITICO': return 'text-red-600 bg-red-50 border-red-100';
-      default: return 'text-slate-600 bg-slate-50 border-slate-100';
-    }
+  const statusData = stats.statusCounts.map((s: any) => ({
+    name: s.status,
+    value: s._count._all
+  }));
+
+  const COLORS = {
+    'OPERACIONAL': '#10b981',
+    'MANUTENCAO': '#f59e0b',
+    'CRITICO': '#ef4444'
   };
 
   return (
     <div className="space-y-8">
-      <header>
-        <h2 className="text-2xl font-bold text-[#0A192F] tracking-tight">Visão Geral do Sistema</h2>
-        <p className="text-[#6B7280] mt-1">Acompanhe o status dos ativos e as últimas intervenções técnicas.</p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-3xl font-black text-[#0A192F] tracking-tighter uppercase">Visão Geral do Sistema</h2>
+          <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mt-1">Acompanhe o status dos ativos e as últimas intervenções técnicas.</p>
+        </div>
+        <button 
+          onClick={() => setShowScanner(true)}
+          className="bg-[#FF6B00] text-white px-8 py-4 flex items-center justify-center gap-3 font-black text-xs uppercase tracking-[0.2em] hover:bg-[#E66000] transition-all shadow-xl rounded-none border-b-4 border-[#0A192F]"
+        >
+          <Camera size={20} />
+          ESCANEAR QR CODE
+        </button>
       </header>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button 
+          onClick={() => onNavigate?.('equipments', 'NEW')}
+          className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
+        >
+          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+            <Plus size={20} />
+          </div>
+          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Novo Ativo</span>
+        </button>
+        <button 
+          onClick={() => onNavigate?.('equipments', 'IMPORT')}
+          className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
+        >
+          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+            <FileSpreadsheet size={20} />
+          </div>
+          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Importar</span>
+        </button>
+        <button 
+          onClick={() => onNavigate?.('maintenances')}
+          className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
+        >
+          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+            <History size={20} />
+          </div>
+          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Histórico</span>
+        </button>
+        <button 
+          onClick={() => onNavigate?.('calendar')}
+          className="bg-white p-6 border border-[#E5E7EB] flex flex-col items-center gap-3 hover:bg-slate-50 transition-all group"
+        >
+          <div className="p-3 bg-slate-100 text-[#0A192F] group-hover:bg-[#0A192F] group-hover:text-white transition-all">
+            <Clock size={20} />
+          </div>
+          <span className="text-[10px] font-black text-[#0A192F] uppercase tracking-widest">Agenda</span>
+        </button>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -88,6 +173,79 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <div className="p-4 bg-emerald-50 text-emerald-600">
               <CheckCircle size={28} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white border border-[#E5E7EB] p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <BarChart3 size={18} className="text-[#0A192F]" />
+            <h3 className="font-black text-[#0A192F] uppercase tracking-[0.2em] text-xs">Desempenho de Manutenções (6 Meses)</h3>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.performanceChart}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} 
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} 
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0px', fontSize: '12px', fontWeight: 'bold' }}
+                />
+                <Bar dataKey="value" fill="#0A192F" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#E5E7EB] p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <PieChartIcon size={18} className="text-[#0A192F]" />
+            <h3 className="font-black text-[#0A192F] uppercase tracking-[0.2em] text-xs">Distribuição de Status</h3>
+          </div>
+          <div className="h-64 flex items-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {statusData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || '#94a3b8'} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '0px', fontSize: '12px', fontWeight: 'bold' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="w-48 space-y-2">
+              {statusData.map((s: any) => (
+                <div key={s.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3" style={{ backgroundColor: COLORS[s.name as keyof typeof COLORS] || '#94a3b8' }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">{s.name}</span>
+                  </div>
+                  <span className="text-xs font-black text-[#0A192F]">{s.value}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -160,6 +318,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+
+      {showScanner && (
+        <QRScannerModal 
+          onScan={handleScan} 
+          onClose={() => setShowScanner(false)} 
+        />
+      )}
     </div>
   );
 };

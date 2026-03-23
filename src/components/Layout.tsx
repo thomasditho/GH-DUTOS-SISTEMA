@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { LayoutDashboard, Package, LogOut, User as UserIcon, Menu, X, Clock } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, User as UserIcon, Menu, X, Clock, Calendar, Settings } from 'lucide-react';
 import { cn } from '../lib/utils';
 import Logo from './Logo';
 import { Toaster } from 'sonner';
@@ -19,7 +19,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'equipments', label: 'Ativos', icon: Package },
     { id: 'maintenances', label: 'Manutenções', icon: Clock },
-    ...(user?.role === 'ADMIN' ? [{ id: 'users', label: 'Usuários', icon: UserIcon }] : []),
+    { id: 'calendar', label: 'Calendário', icon: Calendar },
+    ...(user?.role === 'ADMIN' ? [
+      { id: 'users', label: 'Usuários', icon: UserIcon },
+      { id: 'settings', label: 'Impressão', icon: Settings }
+    ] : []),
   ];
 
   return (
@@ -87,7 +91,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
              <h2 className="text-xs font-bold text-[#6B7280] uppercase tracking-[0.2em]">
                {activeTab === 'dashboard' ? 'Visão Geral da Planta' : 
                 activeTab === 'equipments' ? 'Inventário de Ativos' :
-                activeTab === 'maintenances' ? 'Histórico de Intervenções' : 'Gestão de Acessos'}
+                activeTab === 'maintenances' ? 'Histórico de Intervenções' : 
+                activeTab === 'calendar' ? 'Calendário de Visitas' : 
+                activeTab === 'settings' ? 'Configurações de Impressão' : 'Gestão de Acessos'}
              </h2>
           </div>
           <div className="text-[10px] text-[#9CA3AF] font-bold uppercase tracking-[0.15em]">

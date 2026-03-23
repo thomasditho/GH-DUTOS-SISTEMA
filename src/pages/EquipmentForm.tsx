@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
-import { ArrowLeft, Save, Plus, Trash2, Info } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EquipmentFormProps {
@@ -60,7 +59,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ id, onBack, onSuccess }) 
       });
       toast.success(id ? 'Equipamento atualizado com sucesso!' : 'Equipamento cadastrado com sucesso!');
       onSuccess();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao salvar equipamento. Verifique se o código já existe.');
     } finally {
       setLoading(false);

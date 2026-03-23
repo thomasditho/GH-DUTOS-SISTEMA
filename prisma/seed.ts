@@ -34,7 +34,7 @@ async function main() {
   console.log('Seed completed: Admin and Operator created.');
 
   // Create Sample Equipment
-  const sampleEquipment = await prisma.equipment.upsert({
+  await prisma.equipment.upsert({
     where: { codigo: 'AC-DEMO-01' },
     update: {},
     create: {

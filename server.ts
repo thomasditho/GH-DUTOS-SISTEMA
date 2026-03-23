@@ -37,7 +37,7 @@ async function startServer() {
       const decoded = jwt.verify(token, JWT_SECRET);
       req.user = decoded;
       next();
-    } catch (err) {
+    } catch {
       res.status(401).json({ error: 'Invalid token' });
     }
   };
@@ -60,6 +60,42 @@ async function startServer() {
     }
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, name: user.name }, JWT_SECRET);
     res.json({ token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+  });
+
+  // Print Settings
+  app.get('/api/settings/print', authenticate, async (req, res) => {
+    try {
+      let settings = await prisma.printSettings.findFirst();
+      if (!settings) {
+        settings = await prisma.printSettings.create({
+          data: {
+            reportHeader: 'GH DUTOS - Sistemas de Manutenção',
+            reportFooter: 'www.ghdutos.com.br | (11) 9999-9999',
+            reportPrimaryColor: '#0A192F'
+          }
+        });
+      }
+      res.json(settings);
+    } catch (err) {
+      console.error('Get Print Settings Error:', err);
+      res.status(500).json({ error: 'Erro ao carregar configurações' });
+    }
+  });
+
+  app.post('/api/settings/print', authenticate, async (req, res) => {
+    if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Acesso negado' });
+    try {
+      const data = req.body;
+      const settings = await prisma.printSettings.upsert({
+        where: { id: 1 },
+        update: data,
+        create: { ...data, id: 1 }
+      });
+      res.json(settings);
+    } catch (err) {
+      console.error('Update Print Settings Error:', err);
+      res.status(500).json({ error: 'Erro ao salvar configurações' });
+    }
   });
 
   // Dashboard Stats
@@ -92,6 +128,9 @@ async function startServer() {
       let overdue = 0;
       let upcoming = 0;
 
+      const monthlyMaintenances: { [key: string]: number } = {};
+
+      // Calculate alerts and monthly stats
       allEquipments.forEach(eq => {
         if (!eq.periodicidadeManutencao) return;
 
@@ -108,15 +147,83 @@ async function startServer() {
         }
       });
 
+      // Get maintenance counts for last 6 months
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const maintenancesLast6Months = await prisma.maintenance.findMany({
+        where: {
+          data: {
+            gte: sixMonthsAgo
+          }
+        }
+      });
+
+      maintenancesLast6Months.forEach(m => {
+        const month = m.data.toLocaleString('pt-BR', { month: 'short' }).toUpperCase();
+        monthlyMaintenances[month] = (monthlyMaintenances[month] || 0) + 1;
+      });
+
+      const performanceChart = Object.entries(monthlyMaintenances).map(([name, value]) => ({ name, value }));
+
       res.json({ 
         totalEquipments, 
         statusCounts, 
         recentMaintenances,
-        maintenanceAlerts: { overdue, upcoming }
+        maintenanceAlerts: { overdue, upcoming },
+        performanceChart
       });
     } catch (err) {
       console.error('Dashboard Stats Error:', err);
       res.status(500).json({ error: 'Erro ao carregar estatísticas' });
+    }
+  });
+
+  // Calendar Events
+  app.get('/api/calendar/events', authenticate, async (req, res) => {
+    try {
+      const allEquipments = await prisma.equipment.findMany({
+        include: {
+          maintenances: {
+            orderBy: { data: 'desc' },
+            take: 1
+          }
+        }
+      });
+
+      const events: any[] = [];
+      const now = new Date();
+      const threeMonthsAhead = new Date();
+      threeMonthsAhead.setMonth(threeMonthsAhead.getMonth() + 3);
+
+      allEquipments.forEach(eq => {
+        if (!eq.periodicidadeManutencao) return;
+
+        const lastMaintenance = eq.maintenances[0]?.data || eq.dataInstalacao || eq.createdAt;
+        let nextDate = new Date(lastMaintenance);
+        
+        // Project next dates for the next 3 months
+        while (nextDate < threeMonthsAhead) {
+          nextDate = new Date(nextDate);
+          nextDate.setDate(nextDate.getDate() + eq.periodicidadeManutencao);
+          
+          if (nextDate >= now && nextDate <= threeMonthsAhead) {
+            events.push({
+              id: `${eq.id}-${nextDate.getTime()}`,
+              equipmentId: eq.id,
+              codigo: eq.codigo,
+              tipo: eq.tipo,
+              local: eq.local,
+              date: nextDate.toISOString(),
+              title: `Manutenção: ${eq.codigo}`
+            });
+          }
+        }
+      });
+
+      res.json(events);
+    } catch (err) {
+      console.error('Calendar Events Error:', err);
+      res.status(500).json({ error: 'Erro ao carregar eventos do calendário' });
     }
   });
 
@@ -131,22 +238,29 @@ async function startServer() {
 
   app.post('/api/equipments', authenticate, async (req, res) => {
     const { codigo, tipo, local, andar, status, dataInstalacao, periodicidadeManutencao, attributes } = req.body;
-    const equipment = await prisma.equipment.create({
-      data: {
-        publicId: nanoid(10),
-        codigo,
-        tipo,
-        local,
-        andar,
-        status,
-        dataInstalacao: dataInstalacao ? new Date(dataInstalacao) : null,
-        periodicidadeManutencao: parseInt(periodicidadeManutencao) || null,
-        attributes: {
-          create: attributes || []
+    try {
+      const equipment = await prisma.equipment.create({
+        data: {
+          publicId: nanoid(10),
+          codigo,
+          tipo,
+          local,
+          andar,
+          status,
+          dataInstalacao: dataInstalacao ? new Date(dataInstalacao) : null,
+          periodicidadeManutencao: parseInt(periodicidadeManutencao) || null,
+          attributes: {
+            create: attributes || []
+          }
         }
+      });
+      res.json(equipment);
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        return res.status(400).json({ error: 'Este código de equipamento já está em uso.' });
       }
-    });
-    res.json(equipment);
+      res.status(500).json({ error: 'Erro ao criar equipamento' });
+    }
   });
 
   app.get('/api/equipments/:id', authenticate, async (req, res) => {
@@ -181,13 +295,52 @@ async function startServer() {
     res.json(equipment);
   });
 
+  app.post('/api/equipments/bulk', authenticate, async (req, res) => {
+    const { equipments } = req.body;
+    if (!Array.isArray(equipments)) return res.status(400).json({ error: 'Formato inválido' });
+
+    try {
+      const results = [];
+      for (const eq of equipments) {
+        const { codigo, tipo, local, andar, status, dataInstalacao, periodicidadeManutencao } = eq;
+        
+        if (!codigo) continue;
+
+        // Skip if code already exists
+        const existing = await prisma.equipment.findUnique({ where: { codigo } });
+        if (existing) continue;
+
+        const equipment = await prisma.equipment.create({
+          data: {
+            publicId: nanoid(10),
+            codigo,
+            tipo,
+            local,
+            andar,
+            status: status || 'OPERACIONAL',
+            dataInstalacao: dataInstalacao ? new Date(dataInstalacao) : null,
+            periodicidadeManutencao: periodicidadeManutencao !== undefined && periodicidadeManutencao !== null ? parseInt(periodicidadeManutencao.toString()) : null,
+          }
+        });
+        results.push(equipment);
+      }
+      res.json({ success: true, count: results.length });
+    } catch (err: any) {
+      console.error('Bulk Import Error:', err);
+      if (err.code === 'P2002') {
+        return res.status(400).json({ error: 'Erro de duplicidade: Um ou mais códigos já existem no sistema.' });
+      }
+      res.status(500).json({ error: 'Erro ao importar equipamentos. Verifique o formato dos dados.' });
+    }
+  });
+
   app.delete('/api/equipments/:id', authenticate, async (req, res) => {
     try {
       await prisma.equipment.delete({
         where: { id: parseInt(req.params.id) }
       });
       res.json({ success: true });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: 'Erro ao excluir equipamento' });
     }
   });
@@ -244,9 +397,10 @@ async function startServer() {
       const user = await prisma.user.create({
         data: { email, password: hashedPassword, name, role }
       });
-      const { password: _, ...userWithoutPassword } = user;
+      const userWithoutPassword = { ...user } as any;
+      delete userWithoutPassword.password;
       res.json(userWithoutPassword);
-    } catch (err) {
+    } catch {
       res.status(400).json({ error: 'Email já cadastrado' });
     }
   });
@@ -262,9 +416,10 @@ async function startServer() {
         where: { id: parseInt(req.params.id) },
         data
       });
-      const { password: _, ...userWithoutPassword } = user;
+      const userWithoutPassword = { ...user } as any;
+      delete userWithoutPassword.password;
       res.json(userWithoutPassword);
-    } catch (err) {
+    } catch {
       res.status(400).json({ error: 'Erro ao atualizar usuário' });
     }
   });
@@ -273,7 +428,7 @@ async function startServer() {
     try {
       await prisma.user.delete({ where: { id: parseInt(req.params.id) } });
       res.json({ success: true });
-    } catch (err) {
+    } catch {
       res.status(500).json({ error: 'Erro ao excluir usuário' });
     }
   });

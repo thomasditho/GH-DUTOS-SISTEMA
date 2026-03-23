@@ -50,3 +50,17 @@ model Maintenance {
   arquivoUrl  String?   // PDF or Image link
   equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
 }
+
+model PrintSettings {
+  id                Int      @id @default(1)
+  logoUrl           String?
+  reportHeader      String?
+  reportFooter      String?
+  reportPrimaryColor String   @default("#0A192F")
+  labelWidth        Int      @default(100) // mm
+  labelHeight       Int      @default(60)  // mm
+  labelShowCode     Boolean  @default(true)
+  labelShowLocal    Boolean  @default(true)
+  labelShowType     Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+}

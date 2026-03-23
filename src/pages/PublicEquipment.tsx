@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { fetchApi } from '../services/api';
 import { Package, History, Info, FileText, User, Clock, ShieldCheck } from 'lucide-react';
 import { cn, formatDate } from '../lib/utils';
 

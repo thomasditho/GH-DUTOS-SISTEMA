@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, QrCode, History, Info, Plus, Download, FileText, User, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { ArrowLeft, History, Info, Plus, Download, FileText, User, AlertCircle, Clock } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { cn, formatDate } from '../lib/utils';
 import { jsPDF } from 'jspdf';
@@ -14,9 +14,11 @@ interface EquipmentDetailProps {
 }
 
 const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit }) => {
+  const { user } = useAuth();
   const [equipment, setEquipment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+  const [printSettings, setPrintSettings] = useState<any>(null);
   const [maintenanceForm, setMaintenanceForm] = useState({
     data: new Date().toISOString().split('T')[0],
     descricao: '',
@@ -26,14 +28,28 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
+    const loadData = () => {
+      setLoading(true);
+      Promise.all([
+        fetchApi(`/api/equipments/${id}`),
+        fetchApi('/api/settings/print')
+      ]).then(([e, s]) => {
+        setEquipment(e);
+        setPrintSettings(s);
+      }).finally(() => setLoading(false));
+    };
     loadData();
   }, [id]);
 
   const loadData = () => {
     setLoading(true);
-    fetchApi(`/api/equipments/${id}`)
-      .then(setEquipment)
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetchApi(`/api/equipments/${id}`),
+      fetchApi('/api/settings/print')
+    ]).then(([e, s]) => {
+      setEquipment(e);
+      setPrintSettings(s);
+    }).finally(() => setLoading(false));
   };
 
   const handleAddMaintenance = async (e: React.FormEvent) => {
@@ -55,70 +71,94 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
       setShowMaintenanceModal(false);
       toast.success('Manutenção registrada com sucesso!');
       loadData();
-    } catch (err) {
+    } catch {
       toast.error('Erro ao registrar manutenção');
     }
   };
 
   const generateLabel = () => {
+    const width = printSettings?.labelWidth || 100;
+    const height = printSettings?.labelHeight || 60;
+    const primaryColor = printSettings?.reportPrimaryColor || '#0A192F';
+
     const doc = new jsPDF({
-      orientation: 'landscape',
+      orientation: width > height ? 'landscape' : 'portrait',
       unit: 'mm',
-      format: [100, 60]
+      format: [width, height]
     });
 
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b];
+    };
+    const rgb = hexToRgb(primaryColor);
+
     // Border
-    doc.setDrawColor(10, 25, 47);
+    doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
     doc.setLineWidth(1);
-    doc.rect(2, 2, 96, 56);
+    doc.rect(2, 2, width - 4, height - 4);
 
     // Header
-    doc.setFillColor(10, 25, 47);
-    doc.rect(2, 2, 96, 12, 'F');
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+    doc.rect(2, 2, width - 4, 12, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('GH DUTOS', 50, 10, { align: 'center' });
+    doc.text('GH DUTOS', width / 2, 10, { align: 'center' });
 
     // Content
-    doc.setTextColor(10, 25, 47);
+    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text(`CÓDIGO:`, 10, 22);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${equipment.codigo}`, 30, 22);
+    
+    let y = 22;
+    if (printSettings?.labelShowCode) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`CÓDIGO:`, 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${equipment.codigo}`, 30, y);
+      y += 6;
+    }
 
-    doc.setFont('helvetica', 'bold');
-    doc.text(`TIPO:`, 10, 28);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${equipment.tipo}`, 30, 28);
+    if (printSettings?.labelShowType) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`TIPO:`, 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${equipment.tipo}`, 30, y);
+      y += 6;
+    }
 
-    doc.setFont('helvetica', 'bold');
-    doc.text(`LOCAL:`, 10, 34);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${equipment.local}`, 30, 34);
-
-    doc.setFont('helvetica', 'bold');
-    doc.text(`ANDAR:`, 10, 40);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${equipment.andar}`, 30, 40);
+    if (printSettings?.labelShowLocal) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`LOCAL:`, 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${equipment.local}`, 30, y);
+      y += 6;
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(`ANDAR:`, 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${equipment.andar}`, 30, y);
+    }
 
     // QR Code
     const qrCanvas = document.getElementById('qr-canvas') as HTMLCanvasElement;
     if (qrCanvas) {
       const qrDataUrl = qrCanvas.toDataURL('image/png');
-      doc.addImage(qrDataUrl, 'PNG', 65, 18, 25, 25);
+      doc.addImage(qrDataUrl, 'PNG', width - 35, 18, 25, 25);
     }
 
     doc.setFontSize(6);
     doc.setFont('helvetica', 'bold');
-    doc.text('ESCANEIE PARA VER HISTÓRICO', 77.5, 46, { align: 'center' });
+    doc.text('ESCANEIE PARA VER HISTÓRICO', width - 22.5, 46, { align: 'center' });
     
     doc.setDrawColor(229, 231, 235);
-    doc.line(10, 50, 90, 50);
+    doc.line(10, height - 10, width - 10, height - 10);
     
     doc.setFontSize(8);
-    doc.text('ghdutos.com.br', 50, 54, { align: 'center' });
+    doc.text('ghdutos.com.br', width / 2, height - 6, { align: 'center' });
 
     doc.save(`etiqueta-${equipment.codigo}.pdf`);
   };
@@ -126,26 +166,45 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
   const generateReport = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const primaryColor = printSettings?.reportPrimaryColor || '#0A192F';
     
+    const hexToRgb = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return [r, g, b];
+    };
+    const rgb = hexToRgb(primaryColor);
+
     // Header
-    doc.setFillColor(10, 25, 47);
+    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
     doc.rect(0, 0, pageWidth, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RELATÓRIO DE MANUTENÇÃO', 20, 25);
     
-    doc.setFontSize(10);
+    if (printSettings?.logoUrl) {
+      try {
+        doc.addImage(printSettings.logoUrl, 'PNG', 20, 10, 30, 20);
+      } catch (e) {
+        console.error('Error adding logo to PDF', e);
+      }
+    }
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RELATÓRIO DE MANUTENÇÃO', printSettings?.logoUrl ? 60 : 20, 25);
+    
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
+    doc.text(printSettings?.reportHeader || '', pageWidth - 20, 15, { align: 'right' });
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - 20, 25, { align: 'right' });
 
     // Equipment Info
-    doc.setTextColor(10, 25, 47);
+    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.text('DADOS DO ATIVO', 20, 55);
     
-    doc.setDrawColor(10, 25, 47);
+    doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
     doc.setLineWidth(0.5);
     doc.line(20, 58, 65, 58);
 
@@ -192,8 +251,19 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
       const splitDesc = doc.splitTextToSize(m.descricao, pageWidth - 50);
       doc.text(splitDesc, 25, y + 20);
 
-      y += 45;
+      if (index < equipment.maintenances.length - 1) {
+        y += 45;
+      }
     });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(printSettings?.reportFooter || '', pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+    }
 
     doc.save(`relatorio-${equipment.codigo}.pdf`);
   };
@@ -206,7 +276,6 @@ const EquipmentDetail: React.FC<EquipmentDetailProps> = ({ id, onBack, onEdit })
     </div>
   </div>;
 
-  const { user } = useAuth();
   const publicUrl = `${window.location.origin}/e/${equipment.publicId}`;
 
   return (
