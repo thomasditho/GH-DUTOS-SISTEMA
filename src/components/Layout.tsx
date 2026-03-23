@@ -32,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
       
       {/* Sidebar */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-brand-navy text-white transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 rounded-none",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-[#0A192F] text-white transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 rounded-none",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-8 border-b border-white/5">
@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
               className={cn(
                 "w-full flex items-center gap-3 px-6 py-4 text-xs font-bold uppercase tracking-widest transition-all rounded-none border-l-4",
                 activeTab === item.id 
-                  ? "bg-white/5 border-brand-teal text-white" 
+                  ? "bg-white/5 border-[#FF6B00] text-white" 
                   : "border-transparent text-white/40 hover:text-white hover:bg-white/5"
               )}
             >
@@ -58,7 +58,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-full p-6 border-t border-white/5 bg-brand-navy">
+        <div className="absolute bottom-0 w-full p-6 border-t border-white/5 bg-[#0A192F]">
           <div className="flex items-center gap-3 px-2 py-2 mb-6">
             <div className="w-8 h-8 bg-white/10 flex items-center justify-center text-white rounded-none">
               <UserIcon size={16} />

@@ -166,20 +166,20 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-brand-navy tracking-tighter uppercase">Inventário de Ativos</h2>
+          <h2 className="text-3xl font-black text-[#0A192F] tracking-tighter uppercase">Inventário de Ativos</h2>
           <p className="text-[#6B7280] text-xs font-bold uppercase tracking-widest mt-1">Gestão de equipamentos e infraestrutura</p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <button 
             onClick={() => setShowImportModal(true)}
-            className="w-full sm:w-auto px-6 py-4 border-2 border-brand-navy text-brand-navy flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all rounded-none"
+            className="w-full sm:w-auto px-6 py-4 border-2 border-[#0A192F] text-[#0A192F] flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-slate-50 transition-all rounded-none"
           >
             <FileSpreadsheet size={18} />
             Importar Planilha
           </button>
           <button 
             onClick={onNew}
-            className="w-full sm:w-auto bg-brand-navy text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-brand-teal transition-all shadow-xl rounded-none border-b-4 border-brand-teal"
+            className="w-full sm:w-auto bg-[#0A192F] text-white px-8 py-4 flex items-center justify-center gap-3 font-bold text-xs uppercase tracking-[0.2em] hover:bg-[#112240] transition-all shadow-xl rounded-none border-b-4 border-[#FF6B00]"
           >
             <Plus size={18} />
             Novo Equipamento
@@ -195,14 +195,14 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
             <input 
               type="text" 
               placeholder="BUSCAR POR CÓDIGO, TIPO OU LOCAL..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-0 focus:border-brand-navy rounded-none"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold uppercase tracking-wider focus:outline-none focus:ring-0 focus:border-[#0A192F] rounded-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <div className="flex flex-wrap gap-2">
             <select 
-              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-brand-navy"
+              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
               value={statusFilter}
               onChange={(e) => handleStatusChange(e.target.value)}
             >
@@ -212,7 +212,7 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
               <option value="CRITICO">CRÍTICO</option>
             </select>
             <select 
-              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-brand-navy"
+              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
               value={andarFilter}
               onChange={(e) => setAndarFilter(e.target.value)}
             >
@@ -222,7 +222,7 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
               ))}
             </select>
             <select 
-              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-brand-navy"
+              className="px-4 py-3 bg-white border border-[#E5E7EB] text-xs font-bold text-[#4B5563] uppercase tracking-widest rounded-none focus:outline-none focus:border-[#0A192F]"
               value={localFilter}
               onChange={(e) => setLocalFilter(e.target.value)}
             >
@@ -309,7 +309,7 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
           <p className="text-xs text-[#6B7280]">Mostrando <b>{filtered.length}</b> de <b>{equipments.length}</b> ativos</p>
           <div className="flex items-center gap-1">
             <button className="p-2 border border-[#E5E7EB] text-[#9CA3AF] disabled:opacity-50" disabled><ChevronLeft size={16} /></button>
-            <button className="w-8 h-8 flex items-center justify-center text-xs font-bold bg-brand-navy text-white">1</button>
+            <button className="w-8 h-8 flex items-center justify-center text-xs font-bold bg-[#0A192F] text-white">1</button>
             <button className="p-2 border border-[#E5E7EB] text-[#4B5563] hover:bg-[#F9FAFB]"><ChevronRight size={16} /></button>
           </div>
         </div>
@@ -317,11 +317,11 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
 
       {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-navy/80 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl shadow-2xl p-8 rounded-none border-t-4 border-brand-navy">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A192F]/80 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl shadow-2xl p-8 rounded-none border-t-4 border-[#0A192F]">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black text-brand-navy uppercase tracking-tight">Importar Equipamentos</h3>
-              <button onClick={() => setShowImportModal(false)} className="text-[#9CA3AF] hover:text-brand-navy">
+              <h3 className="text-xl font-black text-[#0A192F] uppercase tracking-tight">Importar Equipamentos</h3>
+              <button onClick={() => setShowImportModal(false)} className="text-[#9CA3AF] hover:text-[#0A192F]">
                 <X size={24} />
               </button>
             </div>
@@ -349,11 +349,11 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
                     htmlFor="bulk-upload"
                     className="cursor-pointer flex flex-col items-center gap-4"
                   >
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-brand-navy">
+                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-[#0A192F]">
                       <Upload size={32} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-brand-navy uppercase tracking-widest">Clique para selecionar arquivo</p>
+                      <p className="text-sm font-bold text-[#0A192F] uppercase tracking-widest">Clique para selecionar arquivo</p>
                       <p className="text-[10px] text-[#9CA3AF] mt-1 uppercase">Arraste sua planilha aqui</p>
                     </div>
                   </label>
@@ -398,7 +398,7 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
                     <button 
                       onClick={processImport}
                       disabled={importing}
-                      className="flex-1 py-4 bg-brand-navy text-white font-bold text-xs uppercase tracking-widest hover:bg-brand-teal disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="flex-1 py-4 bg-[#0A192F] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#112240] disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       {importing ? 'Processando...' : `Importar ${importData.length} Ativos`}
                     </button>
@@ -410,11 +410,11 @@ const EquipmentList: React.FC<EquipmentListProps> = ({ onSelect, onNew, onEdit, 
         </div>
       )}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-navy/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0A192F]/80 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md shadow-2xl p-8 rounded-none border-t-4 border-red-600">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black text-brand-navy uppercase tracking-tight">Confirmar Exclusão</h3>
-              <button onClick={() => setShowDeleteConfirm(null)} className="text-[#9CA3AF] hover:text-brand-navy">
+              <h3 className="text-xl font-black text-[#0A192F] uppercase tracking-tight">Confirmar Exclusão</h3>
+              <button onClick={() => setShowDeleteConfirm(null)} className="text-[#9CA3AF] hover:text-[#0A192F]">
                 <X size={24} />
               </button>
             </div>
